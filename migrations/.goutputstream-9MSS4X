@@ -1,0 +1,324 @@
+<?php
+
+use Phinx\Migration\AbstractMigration;
+
+class SmartcellarDbMigrationVersion001 extends AbstractMigration
+{
+    
+   //SET THE FOLLOWING PROPERTIES FOR YOUR UPDATE/VERSION.
+   
+   //*** the NNN below and in the class name should match the version on the file name - 001, 002, 003, ..
+    private $dbVersionNumber='001';   
+    private $versionDescription="PUT BRIEF DESCRIPTION OF VERSION/UPDATE HERE";
+    private $developmentNumber="";   //This should be the ticket number - if you want to add it.
+    private $updateType='PRODUCT';   //this should be CLIENT or PRODUCT - based on whether this is a client specific change, or general product change.
+    private $databaseClientArray=array();    //for client updates, this is an array of databases that will get updated.  For product updates, this should remain empty.
+    
+    //*** example of set up for CLIENT update.
+    //private $updateType='CLIENT';   //this should be CLIENT or PRODUCT - based on whether this is a client specific change, or general product change.
+    //private $databaseClientArray=array("smartcellar_balisea","smartcellar_circo");    //for client updates, this is an array of databases that will get updated.  For product updates, this should remain empty.
+    
+   
+   //DO NOT CHANGE THESE PROPERTIES
+    private $pdo;   //pdo pointer needed to execute sql commands directly with exec()
+    private $updateStatus="SUCCESS";  
+    
+    
+    //------ Functions used to migrate up and  rollback for product and client specific database migrations ---------//
+    /* 
+    upProduct
+    downProduct
+    upClient
+    downClient
+    */
+    
+    /*
+        Function:  upProduct
+        Description:  This is called for a product migration - updateType=PRODUCT.  The product database is already selected.  use $this->pdo to execute all database
+                                queries.
+        Parameters:  none
+        Returns:  N/A - sets updateStatus to SUCCESS or FAIL
+        
+  */
+   private function upProduct()
+    { 
+        //update this to FAIL if there is an error.        
+        $this->updateStatus='SUCCESS';
+            
+    }
+    
+    /*
+        Function:  downProduct
+        Description:  This is called to migrate down (rollback) for a product migration - updateType=PRODUCT'.  The product database is already selected.
+                            use $this->pdo to execute all database queries/transactions.
+        Parametesr:  none
+        Returns:  N/A - sets updateStatus to SUCCESS or FAIL
+    */
+    private function downProduct()
+    {
+        //update this to FAIL if there is an error.        
+       $this->updateStatus='SUCCESS';
+        
+        
+    }
+
+    /*
+        Function:  upClient
+        Description:  This function should have the specific client migration code that should be run on an up migration.  It will be run on all client databases defined in databaseClientArray,
+                             and will only be called if updateType="CLIENT".  use $this->pdo to execute queries.  This will only be called for the client databases that require the update.
+                            The client database is already selected.
+        Parameters:   None.
+        Returns:  N/A - sets updateStatus to SUCCESS or FAIL
+    */
+
+    private function upClient() 
+    {
+        //update this to FAIL if there is an error.        
+       $this->updateStatus='SUCCESS';
+        
+       
+    }
+    
+     /*
+        Function:  downClient
+        Description:  This function should have the specific client migration code that should be run on a down migration/rollback.  It will be run on all client databases defined in databaseClientArray,
+                            and will only be called if updateType="CLIENT".  use $this->pdo to execute queries.  This will only be called for the client databases that require the rollback.                         
+        Parameters:   None.
+        Returns:  N/A - sets updateStatus to SUCCESS or FAIL
+    */
+    
+    private function downClient()
+    {
+       //update this to FAIL if there is an error.        
+        $this->updateStatus='SUCCESS';
+         
+        
+    }
+
+/*  ---------- DO NOT CHANGE ANY OF THE FUNCTIONS BELOW ----------------- */
+
+/*
+    Function:  up
+    Description:  function called when phinx executes a migration (Migrate Up)
+                        The up method is automatically run by Phinx when you are migrating up and it detects the given migration has not been executed in the past.
+                        Based on the updateType - upClientCheck or upProduct is called.
+    Parameters:  none
+    Return:  N/A  
+*/
+ public function up()
+    {
+        $this->initMigration();    
+        
+        if ($this->updateType === "CLIENT") {
+            $this->upClientCheck();
+        }
+        else {
+           
+            $this->upProduct();
+        }        
+        
+        $this->endMigration("up"); 
+    }   
+
+
+/*
+    Function:  down
+   Description:  function called when phinx executes a rollback (migrate down).
+                        The down method is automatically run by Phinx when you are migrating down and it detects the given migration has been executed in the past.
+                        Based on the updateType, downClient or downProduct is called.
+   Return:  N/A  
+*/
+    public function down()
+    {
+     
+     $this->initMigration();
+     
+     if ($this->updateType === "CLIENT") {
+        $this->downClientCheck();
+     }
+     else {
+        $this->downProduct();
+     }
+     
+     $this->endMigration("down");
+     
+    }
+
+  
+
+/* Function:  upClientCheck
+    Description:  Called for a client database migration.  For each smartcellar database on the server (in smartcellarDBArray), execute migration logic if that database is
+                         defined in $databaseClientArray.
+                        For the specific migration logic - upClientMigration is called.
+                        The update status that is recorded is set to SUCCESS, FAILED, or SUCCESS_CLIENT_SKIPPED if the client database is not defined in databaseClientArray.
+                        
+    Parameters:  none - class properties should already be set.
+    Return:  N/A
+*/
+   private function upClientCheck()
+    {
+        if ($this->updateThisClient() === true) {
+            //upClient code can change status.
+            $this->upClient();
+        }
+        else {
+            $this->updateStatus='SUCCESS_CLIENT_SKIPPED';
+        }
+    }
+    
+    /* Function:  downClientCheck
+    Description:  Called for a client database down migration (rollback).  For each smartcellar database on the server that is defined in databaseClientArray, execute down migration (rollback) logic.
+                        For the specific migration logic - downClientMigration is called.
+    Parameters:  none - class properties should already be set.
+    Return:  N/A
+*/ 
+    private function downClientCheck()
+    {
+         if ($this->updateThisClient() === true) {
+             $this->downClient();
+         }
+    }
+    
+    /*
+        Function:  updateDBVersionFile
+        Description:  updates the database_version file with this migration information based on class properties.
+        Parameters:  dbName - if passed as a parameter, use command is executing to select the database.
+        Return:  N/A.
+            
+    */
+    private function updateDBVersionFile() 
+    {
+        
+        if ($this->tableExists("database_version")) {
+            $sql = $this->pdo->prepare("INSERT INTO database_version (current_version,update_status,update_type, version_description,development_number) VALUES (?, ?, ?, ?, ?)");       
+            $sql->execute(array($this->dbVersionNumber, $this->updateStatus,$this->updateType,$this->versionDescription,$this->developmentNumber));              
+        }    
+    }
+    
+    /*
+        Function:  rollbackDBVersionFile
+        Description:  called on a migration down/rollback, to remove the entry in the database_version table for this version.
+        Parameters:  dbName - if passed as a parameter, use command is executing to select the database.
+        Return:  N/A   
+    */
+    private function rollbackDBVersionFile()   
+    {
+        if ($this->tableExists("database_version")) {
+            $count=$this->pdo->exec("delete from database_version where current_version = '$this->dbVersionNumber'");    
+        }    
+    }
+    
+    /*
+        Function:  setPDO
+        Description:  sets the class property pdo - which is used to execute pdo commands.  Phinx pdo class did not support all commands.
+        Parameters:  none
+        Returns: none - sets $this->pdo.
+    */
+    
+  private function setPDO()
+    {
+        $dbAdapter = $this->getAdapter();
+
+        if ($dbAdapter instanceof \Phinx\Db\Adapter\PdoAdapter) {
+           $this->pdo = $dbAdapter->getConnection();
+        }
+        else {
+            $this->pdo=null;        
+        }    
+    }
+   
+   /*
+        Function:  initMigration
+        Description:  called at the beginning of each migration (up or down), to initial class properties that are required for all migrations.
+                            Currently it sets pdo, and smartcellarDatabaseArray.
+        Parameters: none
+        Returns:  N/A
+        
+   */
+   private function initMigration() 
+   {
+       $this->setPDO();   
+   }
+
+ /*
+    Function endMigration
+    Description:  called at the end of all migrations to update database version file, and do any other cleanup that might be required.
+    Parameters:  type - up/down.
+    Returns:  N/A
+ */   
+   private function endMigration($type)
+   {
+        switch ($type) {
+            case 'up':
+                $this->updateDBVersionFile();
+                break;
+            case 'down':
+                $this->rollbackDBVersionFile();
+                break;
+            default:
+                //this should never happen
+                break;        
+        
+        }
+   }
+   
+   /*
+        Function:  updateThisClient
+        Description:  based on current database, determine whether or not to install client changes.
+        Parameters:  none
+        Returns:  true/false.   True - install changes on this client, false to skip this client. 
+   */
+  private function updateThisClient()
+  {
+     $returnVal=false; 
+     $clientDB=null;
+     
+   //get current database
+    $sql="SELECT DATABASE() as db;";
+    $resultArray=$this->pdo->query($sql);
+    if ($resultArray !== false) {
+        if (count($resultArray)) {
+            foreach ($resultArray as $row) {
+                $clientDB=$row['db']];   
+            }
+        }
+    }
+    
+    if ($clientDB !== null) {
+        if (in_array($clientDB, $this->databaseClientArray)) {
+            $returnVal=true;    
+        }
+    }
+    
+   return $returnVal;
+  } 
+  
+  /*   
+        Function:  tableExists
+        Description:  checks if table exists.
+        Parameters:  tableName
+        Returns:  true if table exists, false if table doesn't exist.  
+  */
+  private function tableExists($tableName)
+  {
+      
+    $returnVal=false;
+    
+    $sql="SHOW TABLES LIKE '".$tableName."'";
+    
+    $resultArray=$this->pdo->query($sql);
+    $count=0;
+    
+    //For some reason, a 'count' of this array does not necessary indicate the number of rows returned ??
+    //resultArray is a PDO object.
+    foreach ($resultArray As $ind=>$val) {
+        $count++;    
+    }
+    
+    if ($count>0) {
+        $returnVal=true;    
+    }
+  
+    return $returnVal;
+  }
+}

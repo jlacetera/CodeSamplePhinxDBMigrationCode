@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# This executes in project home folder, and executes on a git pull/merge.
+#
+# This file should be installed in project/.git/hooks folder.
+#
+
+echo "In post-merge" 
+
+MIGRATIONPATH=Migrations
+
+cd $MIGRATIONPATH
+
+php SmartcellarDBUpgradeScript.php migrate 
+
+echo "Finished with post-merge processing."
+
